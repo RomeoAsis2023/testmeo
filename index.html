@@ -6,15 +6,14 @@
     <title>circlenode · social profile with webtorrent & yjs</title>
     <!-- Font Awesome 6 (free icons) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Reconnecting WebSocket + webconnect (already specified) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/reconnecting-websocket/1.0.0/reconnecting-websocket.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/webconnect@0.0.12/dist/umd/webconnect.js"></script>
-    <!-- Yjs core & websocket provider + webtorrent -->
+    <!-- Yjs Core - MUST LOAD FIRST -->
     <script src="https://cdn.jsdelivr.net/npm/yjs@13.6.0/dist/y.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/y-websocket@1.5.0/dist/y-websocket.min.js"></script>
+    <!-- Reconnecting WebSocket + webconnect -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reconnecting-websocket/1.0.0/reconnecting-websocket.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/webconnect@0.0.12/dist/umd/webconnect.js"></script>
+    <!-- WebTorrent -->
     <script src="https://cdn.jsdelivr.net/npm/webtorrent@2.0.0/webtorrent.min.js"></script>
-    <!-- router.js (hash based simple routing) -->
-    <script src="https://github.com/ramiel/router.js/raw/master/dist/router.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -29,7 +28,6 @@
             color: #1e2a3e;
         }
 
-        /* main container */
         .circlenode-container {
             max-width: 1300px;
             margin: 0 auto;
@@ -38,7 +36,6 @@
             gap: 28px;
         }
 
-        /* left profile card */
         .profile-card {
             flex: 1.2;
             min-width: 280px;
@@ -51,7 +48,6 @@
             border: 1px solid rgba(255,255,255,0.5);
         }
 
-        /* right feed panel */
         .feed-panel {
             flex: 2.8;
             min-width: 320px;
@@ -65,7 +61,6 @@
             gap: 1.8rem;
         }
 
-        /* avatar section */
         .avatar-wrapper {
             text-align: center;
             margin-bottom: 1.5rem;
@@ -95,7 +90,6 @@
         .avatar-upload-btn:hover { background: #1e2b46; transform: scale(0.97);}
         .file-input-hidden { display: none; }
 
-        /* about me section */
         .about-section {
             background: #f8fafc;
             border-radius: 1.5rem;
@@ -119,7 +113,6 @@
             margin-bottom: 1rem;
         }
 
-        /* stats row */
         .stats-row {
             display: flex;
             justify-content: space-around;
@@ -131,7 +124,6 @@
         }
         .stat { text-align: center; }
 
-        /* feed & media tabs */
         .tabs {
             display: flex;
             gap: 12px;
@@ -161,7 +153,6 @@
         }
         .tab-content.active-tab { display: block; }
 
-        /* wall feed */
         .feed-item {
             background: white;
             border-radius: 1.2rem;
@@ -205,12 +196,13 @@
             cursor: pointer;
         }
 
-        /* videos & photos grid */
         .media-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: 14px;
             margin-top: 10px;
+            max-height: 400px;
+            overflow-y: auto;
         }
         .media-card {
             background: #f1f5f9;
@@ -243,6 +235,7 @@
             border-radius: 60px;
             font-size: 0.8rem;
             cursor: pointer;
+            display: inline-block;
         }
         .torrent-vid-player {
             margin-top: 12px;
@@ -263,11 +256,16 @@
             opacity: 0.7;
         }
         button { cursor: pointer; }
+        .status-badge {
+            font-size: 0.7rem;
+            color: #10b981;
+            text-align: center;
+            margin-top: 8px;
+        }
     </style>
 </head>
 <body>
 <div class="circlenode-container">
-    <!-- LEFT: Profile Card -->
     <div class="profile-card">
         <div class="avatar-wrapper">
             <img id="profileAvatar" class="avatar-img" src="https://ui-avatars.com/api/?background=3b82f6&color=fff&rounded=true&bold=true&size=140&name=C+Node" alt="avatar">
@@ -289,12 +287,11 @@
             <div class="section-title"><i class="fas fa-user-astronaut"></i> About Me</div>
             <textarea id="aboutMeInput" class="about-text" rows="3" placeholder="Write something about yourself... (real-time sync across devices)"></textarea>
         </div>
-        <div style="font-size: 0.75rem; color:#5b6e8c; text-align:center; margin-top: 10px;">
-            <i class="fas fa-sync-alt"></i> Live collaborative via Yjs
+        <div class="status-badge" id="syncStatus">
+            <i class="fas fa-sync-alt fa-spin"></i> Syncing...
         </div>
     </div>
 
-    <!-- RIGHT: Feeds + Media Tabs -->
     <div class="feed-panel">
         <div class="tabs">
             <button class="tab-btn active" data-tab="wall"><i class="fas fa-th-list"></i> Wall Feeds</button>
@@ -302,7 +299,6 @@
             <button class="tab-btn" data-tab="videos"><i class="fas fa-video"></i> Videos / Stream</button>
         </div>
 
-        <!-- WALL TAB -->
         <div id="wallTab" class="tab-content active-tab">
             <div class="post-input-area">
                 <input type="text" id="newPostText" class="post-input" placeholder="What's on your mind? 🌟">
@@ -311,7 +307,6 @@
             <div id="wallFeedContainer" style="max-height: 400px; overflow-y: auto;"></div>
         </div>
 
-        <!-- PHOTOS TAB -->
         <div id="photosTab" class="tab-content">
             <div class="upload-media">
                 <span class="upload-label" id="uploadPhotoLabel"><i class="fas fa-upload"></i> Upload Photo</span>
@@ -321,7 +316,6 @@
             <div id="photosGrid" class="media-grid"></div>
         </div>
 
-        <!-- VIDEOS TAB (WebTorrent streaming) -->
         <div id="videosTab" class="tab-content">
             <div class="upload-media">
                 <span class="upload-label" id="uploadVideoLabel"><i class="fas fa-file-video"></i> Upload Video (torrent)</span>
@@ -331,7 +325,7 @@
             <div id="videoList" class="media-grid"></div>
             <div id="streamingPlayer" style="margin-top: 20px; display: none;">
                 <div class="section-title"><i class="fas fa-play-circle"></i> Streaming Player</div>
-                <video id="torrentVideoPlayer" controls style="width:100%; border-radius: 1rem; background:#000;" controlslist="nodownload"></video>
+                <video id="torrentVideoPlayer" controls style="width:100%; border-radius: 1rem; background:#000;"></video>
             </div>
         </div>
     </div>
@@ -339,318 +333,367 @@
 <footer>⚡ circlenode — real‑time wall & media via Yjs · WebTorrent P2P streaming</footer>
 
 <script>
-    // --- global state (Yjs & WebTorrent) ---
-    const ydoc = new Y.Doc();
-    // Use public y-websocket signaling (or fallback to local)
-    const provider = new Y.WebsocketProvider('wss://demos.yjs.dev', 'circlenode-room', ydoc);
-    
-    // Shared types
-    const yPosts = ydoc.getArray('wall_posts');      // [{text, timestamp, userId?}]
-    const yPhotos = ydoc.getArray('photos');         // [{name, magnetURI, url?}]
-    const yVideos = ydoc.getArray('videos');         // [{name, magnetURI, type}]
-    const yAbout = ydoc.getText('about_me');
-    const yAvatar = ydoc.getText('avatar_data');     // base64 string (simplified)
-
-    // UI elements binding
-    const aboutTextarea = document.getElementById('aboutMeInput');
-    const avatarImg = document.getElementById('profileAvatar');
-    const postCountSpan = document.getElementById('postCount');
-    const photoCountSpan = document.getElementById('photoCount');
-    const videoCountSpan = document.getElementById('videoCount');
-    const wallContainer = document.getElementById('wallFeedContainer');
-    const photosGrid = document.getElementById('photosGrid');
-    const videoListDiv = document.getElementById('videoList');
-    const streamingPlayerDiv = document.getElementById('streamingPlayer');
-    const torrentVideoPlayer = document.getElementById('torrentVideoPlayer');
-
-    // WebTorrent client
-    let webtorrentClient = null;
-    function initWebTorrent() {
-        if (typeof WebTorrent !== 'undefined') {
-            webtorrentClient = new WebTorrent();
-            console.log('WebTorrent client ready');
-        } else {
-            console.warn('WebTorrent not loaded?');
-        }
-    }
-    initWebTorrent();
-
-    // Helper: update counts
-    function updateStats() {
-        postCountSpan.innerText = yPosts.length;
-        photoCountSpan.innerText = yPhotos.length;
-        videoCountSpan.innerText = yVideos.length;
-    }
-
-    // RENDER WALL FEEDS
-    function renderWall() {
-        wallContainer.innerHTML = '';
-        const posts = yPosts.toArray().slice().reverse();
-        posts.forEach(post => {
-            const div = document.createElement('div');
-            div.className = 'feed-item';
-            div.innerHTML = `
-                <div class="feed-text"><i class="fas fa-user-circle"></i> ${escapeHtml(post.text)}</div>
-                <div class="feed-time"><i class="far fa-clock"></i> ${new Date(post.timestamp).toLocaleString()}</div>
-            `;
-            wallContainer.appendChild(div);
-        });
-        updateStats();
-    }
-
-    // RENDER PHOTOS (magnet links / preview)
-    function renderPhotos() {
-        photosGrid.innerHTML = '';
-        const photosArr = yPhotos.toArray();
-        if(photosArr.length === 0) {
-            photosGrid.innerHTML = '<div style="text-align:center; padding: 2rem;">✨ No photos yet, upload your first image.</div>';
+    // Wait for all scripts to load
+    (function() {
+        // Check if Y is defined
+        if (typeof Y === 'undefined') {
+            console.error('Yjs not loaded yet, retrying...');
+            setTimeout(arguments.callee, 100);
             return;
         }
-        photosArr.forEach((photo, idx) => {
-            const card = document.createElement('div');
-            card.className = 'media-card';
-            // show thumbnail preview if we have URL from blob, else placeholder
-            const imgSrc = photo.previewDataUrl || 'https://placehold.co/200x150?text=torrent+image';
-            card.innerHTML = `
-                <img src="${imgSrc}" alt="preview">
-                <div style="padding: 6px; font-size: 0.7rem; text-align:center;">${escapeHtml(photo.name || 'image')}</div>
-            `;
-            card.onclick = () => { downloadAndShowPhoto(photo.magnetURI, card); };
-            photosGrid.appendChild(card);
-        });
-    }
-
-    async function downloadAndShowPhoto(magnetURI, cardElement) {
-        if(!webtorrentClient) return alert("WebTorrent loading");
-        alert("Downloading photo via P2P ... preview will update shortly");
-        webtorrentClient.add(magnetURI, (torrent) => {
-            torrent.files[0].getBlobURL((err, url) => {
-                if(err) return;
-                const img = cardElement.querySelector('img');
-                if(img) img.src = url;
-                // also update in shared data for consistency
-            });
-        });
-    }
-
-    // RENDER VIDEOS (list & streaming)
-    function renderVideos() {
-        videoListDiv.innerHTML = '';
-        const videosArr = yVideos.toArray();
-        if(videosArr.length === 0) {
-            videoListDiv.innerHTML = '<div style="text-align:center; padding: 2rem;">🎥 No videos yet. Upload or use sample torrent.</div>';
-            return;
-        }
-        videosArr.forEach((video, idx) => {
-            const card = document.createElement('div');
-            card.className = 'media-card';
-            card.style.cursor = 'pointer';
-            card.innerHTML = `
-                <video poster="https://placehold.co/200x150?text=video+torrent" style="width:100%; height:130px; object-fit:cover;"></video>
-                <div style="padding:6px; font-size:0.8rem;">📀 ${escapeHtml(video.name)}</div>
-            `;
-            card.onclick = () => { playVideoTorrent(video.magnetURI, video.name); };
-            videoListDiv.appendChild(card);
-        });
-    }
-
-    let activeTorrent = null;
-    function playVideoTorrent(magnetURI, videoName) {
-        if(!webtorrentClient) { alert("WebTorrent client not ready"); return; }
-        if(activeTorrent) {
-            try { webtorrentClient.remove(activeTorrent); } catch(e){}
-        }
-        streamingPlayerDiv.style.display = 'block';
-        torrentVideoPlayer.poster = '';
-        torrentVideoPlayer.src = '';
-        torrentVideoPlayer.textContent = 'Loading torrent metadata & streaming...';
-        webtorrentClient.add(magnetURI, (torrent) => {
-            activeTorrent = torrent;
-            const videoFile = torrent.files.find(f => f.name.match(/\.(mp4|webm|mkv|mov)/i)) || torrent.files[0];
-            if(videoFile) {
-                videoFile.renderTo(torrentVideoPlayer, { autoplay: true, controls: true }, (err, elem) => {
-                    if(err) console.error(err);
-                });
+        
+        console.log('Yjs loaded successfully');
+        
+        // --- global state (Yjs & WebTorrent) ---
+        const ydoc = new Y.Doc();
+        // Use public y-websocket signaling
+        const provider = new Y.WebsocketProvider('wss://demos.yjs.dev', 'circlenode-room', ydoc);
+        
+        // Shared types
+        const yPosts = ydoc.getArray('wall_posts');
+        const yPhotos = ydoc.getArray('photos');
+        const yVideos = ydoc.getArray('videos');
+        const yAbout = ydoc.getText('about_me');
+        const yAvatar = ydoc.getText('avatar_data');
+        
+        // UI elements binding
+        const aboutTextarea = document.getElementById('aboutMeInput');
+        const avatarImg = document.getElementById('profileAvatar');
+        const postCountSpan = document.getElementById('postCount');
+        const photoCountSpan = document.getElementById('photoCount');
+        const videoCountSpan = document.getElementById('videoCount');
+        const wallContainer = document.getElementById('wallFeedContainer');
+        const photosGrid = document.getElementById('photosGrid');
+        const videoListDiv = document.getElementById('videoList');
+        const streamingPlayerDiv = document.getElementById('streamingPlayer');
+        const torrentVideoPlayer = document.getElementById('torrentVideoPlayer');
+        const syncStatus = document.getElementById('syncStatus');
+        
+        // WebTorrent client
+        let webtorrentClient = null;
+        
+        function initWebTorrent() {
+            if (typeof WebTorrent !== 'undefined') {
+                webtorrentClient = new WebTorrent();
+                console.log('WebTorrent client ready');
             } else {
-                torrentVideoPlayer.textContent = 'No playable video file in torrent.';
+                console.warn('WebTorrent not loaded yet');
+                setTimeout(initWebTorrent, 500);
+            }
+        }
+        initWebTorrent();
+        
+        // Helper: update counts
+        function updateStats() {
+            postCountSpan.innerText = yPosts.length;
+            photoCountSpan.innerText = yPhotos.length;
+            videoCountSpan.innerText = yVideos.length;
+        }
+        
+        // Escape HTML
+        function escapeHtml(str) { 
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+        
+        // RENDER WALL FEEDS
+        function renderWall() {
+            if (!wallContainer) return;
+            wallContainer.innerHTML = '';
+            const posts = yPosts.toArray().slice().reverse();
+            if (posts.length === 0) {
+                wallContainer.innerHTML = '<div style="text-align:center; padding: 2rem;">💬 No posts yet. Be the first to share!</div>';
+                return;
+            }
+            posts.forEach(post => {
+                const div = document.createElement('div');
+                div.className = 'feed-item';
+                div.innerHTML = `
+                    <div class="feed-text"><i class="fas fa-user-circle"></i> ${escapeHtml(post.text)}</div>
+                    <div class="feed-time"><i class="far fa-clock"></i> ${new Date(post.timestamp).toLocaleString()}</div>
+                `;
+                wallContainer.appendChild(div);
+            });
+            updateStats();
+        }
+        
+        // RENDER PHOTOS
+        function renderPhotos() {
+            if (!photosGrid) return;
+            photosGrid.innerHTML = '';
+            const photosArr = yPhotos.toArray();
+            if (photosArr.length === 0) {
+                photosGrid.innerHTML = '<div style="text-align:center; padding: 2rem;">✨ No photos yet, upload your first image.</div>';
+                return;
+            }
+            photosArr.forEach((photo, idx) => {
+                const card = document.createElement('div');
+                card.className = 'media-card';
+                const imgSrc = photo.previewDataUrl || 'https://placehold.co/200x150?text=torrent+image';
+                card.innerHTML = `
+                    <img src="${imgSrc}" alt="preview">
+                    <div style="padding: 6px; font-size: 0.7rem; text-align:center;">${escapeHtml(photo.name || 'image')}</div>
+                `;
+                if (photo.magnetURI) {
+                    card.onclick = () => downloadAndShowPhoto(photo.magnetURI, card);
+                }
+                photosGrid.appendChild(card);
+            });
+        }
+        
+        async function downloadAndShowPhoto(magnetURI, cardElement) {
+            if (!webtorrentClient) {
+                alert("WebTorrent loading, please wait...");
+                return;
+            }
+            alert("Downloading photo via P2P ... preview will update shortly");
+            webtorrentClient.add(magnetURI, (torrent) => {
+                torrent.files[0].getBlobURL((err, url) => {
+                    if (err) return;
+                    const img = cardElement.querySelector('img');
+                    if (img) img.src = url;
+                });
+            });
+        }
+        
+        // RENDER VIDEOS
+        function renderVideos() {
+            if (!videoListDiv) return;
+            videoListDiv.innerHTML = '';
+            const videosArr = yVideos.toArray();
+            if (videosArr.length === 0) {
+                videoListDiv.innerHTML = '<div style="text-align:center; padding: 2rem;">🎥 No videos yet. Upload or use sample torrent.</div>';
+                return;
+            }
+            videosArr.forEach((video, idx) => {
+                const card = document.createElement('div');
+                card.className = 'media-card';
+                card.style.cursor = 'pointer';
+                card.innerHTML = `
+                    <video poster="https://placehold.co/200x150?text=video+torrent" style="width:100%; height:130px; object-fit:cover;"></video>
+                    <div style="padding:6px; font-size:0.8rem;">📀 ${escapeHtml(video.name)}</div>
+                `;
+                card.onclick = () => { playVideoTorrent(video.magnetURI, video.name); };
+                videoListDiv.appendChild(card);
+            });
+        }
+        
+        let activeTorrent = null;
+        
+        function playVideoTorrent(magnetURI, videoName) {
+            if (!webtorrentClient) { 
+                alert("WebTorrent client not ready"); 
+                return; 
+            }
+            if (activeTorrent) {
+                try { webtorrentClient.remove(activeTorrent); } catch(e) {}
+            }
+            streamingPlayerDiv.style.display = 'block';
+            torrentVideoPlayer.src = '';
+            torrentVideoPlayer.poster = '';
+            torrentVideoPlayer.controls = true;
+            
+            webtorrentClient.add(magnetURI, (torrent) => {
+                activeTorrent = torrent;
+                const videoFile = torrent.files.find(f => f.name.match(/\.(mp4|webm|mkv|mov)/i)) || torrent.files[0];
+                if (videoFile) {
+                    videoFile.renderTo(torrentVideoPlayer, { autoplay: true, controls: true }, (err, elem) => {
+                        if (err) console.error(err);
+                    });
+                } else {
+                    torrentVideoPlayer.innerHTML = '<source src="" type="video/mp4">No playable video file in torrent.';
+                }
+            });
+        }
+        
+        // UPLOAD file via WebTorrent
+        function seedFileToTorrent(file, type, onMagnet) {
+            if (!webtorrentClient) {
+                alert("WebTorrent initializing...");
+                return;
+            }
+            webtorrentClient.seed(file, (torrent) => {
+                const magnetURI = torrent.magnetURI;
+                let preview = null;
+                if (type === 'photo') {
+                    preview = URL.createObjectURL(file);
+                }
+                onMagnet(magnetURI, preview, file.name);
+                console.log('Seeding:', magnetURI);
+            });
+        }
+        
+        // Yjs observers
+        yPosts.observe(() => { renderWall(); updateStats(); });
+        yPhotos.observe(() => { renderPhotos(); updateStats(); });
+        yVideos.observe(() => { renderVideos(); updateStats(); });
+        
+        // About sync
+        yAbout.observe(() => {
+            if (aboutTextarea && aboutTextarea.value !== yAbout.toString()) {
+                aboutTextarea.value = yAbout.toString();
             }
         });
-    }
-
-    // UPLOAD file via WebTorrent seed & share magnet
-    function seedFileToTorrent(file, type, onMagnet) {
-        if(!webtorrentClient) return alert("WebTorrent initializing...");
-        webtorrentClient.seed(file, (torrent) => {
-            const magnetURI = torrent.magnetURI;
-            // generate preview url for images
-            let preview = null;
-            if(type === 'photo') {
-                const blobUrl = URL.createObjectURL(file);
-                preview = blobUrl;
+        
+        if (aboutTextarea) {
+            aboutTextarea.addEventListener('input', (e) => {
+                yAbout.delete(0, yAbout.length);
+                yAbout.insert(0, e.target.value);
+            });
+        }
+        
+        // Avatar sync
+        yAvatar.observe(() => {
+            const data = yAvatar.toString();
+            if (data && data.startsWith('data:image')) {
+                avatarImg.src = data;
+            } else if (data && data !== "") {
+                avatarImg.src = data;
             }
-            onMagnet(magnetURI, preview, file.name);
-            // auto stop seeding after 10min? keep for others.
-            console.log('Seeding:', magnetURI);
         });
-    }
-
-    // ---- EVENT HANDLERS & Yjs observers ----
-    yPosts.observe(() => { renderWall(); updateStats(); });
-    yPhotos.observe(() => { renderPhotos(); updateStats(); });
-    yVideos.observe(() => { renderVideos(); updateStats(); });
-    
-    // about sync
-    yAbout.observe(() => {
-        if(aboutTextarea.value !== yAbout.toString()) {
-            aboutTextarea.value = yAbout.toString();
+        
+        // Connection status
+        provider.on('status', event => {
+            console.log('Yjs connection status:', event.status);
+            if (syncStatus) {
+                if (event.status === 'connected') {
+                    syncStatus.innerHTML = '<i class="fas fa-check-circle"></i> Live sync active';
+                    syncStatus.style.color = '#10b981';
+                } else {
+                    syncStatus.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Connecting...';
+                    syncStatus.style.color = '#f59e0b';
+                }
+            }
+        });
+        
+        // Initialize content if empty
+        if (yAbout.length === 0) {
+            yAbout.insert(0, "🌟 Decentralized soul | building on yjs & webtorrent. Love P2P!");
         }
-    });
-    aboutTextarea.addEventListener('input', (e) => {
-        yAbout.delete(0, yAbout.length);
-        yAbout.insert(0, e.target.value);
-    });
-    
-    // avatar sync: keep simple base64 in yAvatar
-    yAvatar.observe(() => {
-        const data = yAvatar.toString();
-        if(data && data.startsWith('data:image')) {
-            avatarImg.src = data;
-        } else if(data && data !== "") {
-            avatarImg.src = data;
-        }
-    });
-    
-    // load initial if empty
-    if(yAbout.length === 0) yAbout.insert(0, "🌟 Decentralized soul | building on yjs & webtorrent. Love P2P!");
-    
-    // publish post
-    document.getElementById('publishPostBtn').onclick = () => {
-        const inputEl = document.getElementById('newPostText');
-        const text = inputEl.value.trim();
-        if(!text) return;
-        yPosts.push([{ text: text, timestamp: Date.now() }]);
-        inputEl.value = '';
-    };
-    
-    // AVATAR UPLOAD
-    document.getElementById('uploadAvatarBtn').onclick = () => {
-        document.getElementById('avatarFileInput').click();
-    };
-    document.getElementById('avatarFileInput').onchange = (e) => {
-        const file = e.target.files[0];
-        if(file && file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const base64 = ev.target.result;
-                yAvatar.delete(0, yAvatar.length);
-                yAvatar.insert(0, base64);
+        
+        // Publish post
+        const publishBtn = document.getElementById('publishPostBtn');
+        const newPostText = document.getElementById('newPostText');
+        if (publishBtn) {
+            publishBtn.onclick = () => {
+                const text = newPostText ? newPostText.value.trim() : '';
+                if (!text) return;
+                yPosts.push([{ text: text, timestamp: Date.now() }]);
+                if (newPostText) newPostText.value = '';
             };
-            reader.readAsDataURL(file);
         }
-    };
-    
-    // PHOTO UPLOAD
-    const photoUploadLabel = document.getElementById('uploadPhotoLabel');
-    const photoFileInput = document.getElementById('photoFileInput');
-    photoUploadLabel.onclick = () => photoFileInput.click();
-    photoFileInput.onchange = (e) => {
-        const file = e.target.files[0];
-        if(file && file.type.startsWith('image/')) {
-            seedFileToTorrent(file, 'photo', (magnetURI, previewUrl, fileName) => {
-                yPhotos.push([{ name: fileName, magnetURI: magnetURI, previewDataUrl: previewUrl }]);
-                URL.revokeObjectURL(previewUrl);
+        
+        // Avatar upload
+        const uploadAvatarBtn = document.getElementById('uploadAvatarBtn');
+        const avatarFileInput = document.getElementById('avatarFileInput');
+        if (uploadAvatarBtn && avatarFileInput) {
+            uploadAvatarBtn.onclick = () => avatarFileInput.click();
+            avatarFileInput.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        const base64 = ev.target.result;
+                        yAvatar.delete(0, yAvatar.length);
+                        yAvatar.insert(0, base64);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+        }
+        
+        // Photo upload
+        const photoUploadLabel = document.getElementById('uploadPhotoLabel');
+        const photoFileInput = document.getElementById('photoFileInput');
+        if (photoUploadLabel && photoFileInput) {
+            photoUploadLabel.onclick = () => photoFileInput.click();
+            photoFileInput.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    seedFileToTorrent(file, 'photo', (magnetURI, previewUrl, fileName) => {
+                        yPhotos.push([{ name: fileName, magnetURI: magnetURI, previewDataUrl: previewUrl }]);
+                        if (previewUrl) URL.revokeObjectURL(previewUrl);
+                    });
+                }
+                photoFileInput.value = '';
+            };
+        }
+        
+        // Video upload
+        const videoUploadLabel = document.getElementById('uploadVideoLabel');
+        const videoFileInput = document.getElementById('videoFileInput');
+        if (videoUploadLabel && videoFileInput) {
+            videoUploadLabel.onclick = () => videoFileInput.click();
+            videoFileInput.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file && file.type.startsWith('video/')) {
+                    seedFileToTorrent(file, 'video', (magnetURI, _, fileName) => {
+                        yVideos.push([{ name: fileName, magnetURI: magnetURI, type: 'video' }]);
+                    });
+                }
+                videoFileInput.value = '';
+            };
+        }
+        
+        // Sample video
+        const testSampleBtn = document.getElementById('testSampleVideoBtn');
+        if (testSampleBtn) {
+            testSampleBtn.onclick = () => {
+                const sampleMagnet = 'magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969%2Fannounce';
+                const existing = yVideos.toArray().find(v => v.name === 'Sintel Sample');
+                if (!existing) {
+                    yVideos.push([{ name: 'Sintel Sample (torrent)', magnetURI: sampleMagnet, type: 'video' }]);
+                } else {
+                    alert('Sample already added to video library');
+                }
+            };
+        }
+        
+        // Tab switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active-tab'));
+            const targetTab = document.getElementById(`${tabId}Tab`);
+            if (targetTab) targetTab.classList.add('active-tab');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+            if (activeBtn) activeBtn.classList.add('active');
+        }
+        
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tab = btn.getAttribute('data-tab');
+                if (tab === 'wall') switchTab('wall');
+                if (tab === 'photos') switchTab('photos');
+                if (tab === 'videos') switchTab('videos');
             });
-        }
-        photoFileInput.value = '';
-    };
-    
-    // VIDEO UPLOAD
-    const videoUploadLabel = document.getElementById('uploadVideoLabel');
-    const videoFileInput = document.getElementById('videoFileInput');
-    videoUploadLabel.onclick = () => videoFileInput.click();
-    videoFileInput.onchange = (e) => {
-        const file = e.target.files[0];
-        if(file && file.type.startsWith('video/')) {
-            seedFileToTorrent(file, 'video', (magnetURI, _, fileName) => {
-                yVideos.push([{ name: fileName, magnetURI: magnetURI, type: 'video' }]);
-            });
-        }
-        videoFileInput.value = '';
-    };
-    
-    // SAMPLE VIDEO TORRENT (Big Buck Bunny small sample, public)
-    document.getElementById('testSampleVideoBtn').onclick = () => {
-        // well-known sample torrent (small clip)
-        const sampleMagnet = 'magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969%2Fannounce';
-        // check duplicate
-        const existing = yVideos.toArray().find(v => v.name === 'Sintel Sample');
-        if(!existing) {
-            yVideos.push([{ name: 'Sintel Sample (torrent)', magnetURI: sampleMagnet, type: 'video' }]);
-        } else {
-            alert('Sample already added to video library');
-        }
-    };
-    
-    // TABS ROUTING using router.js (simple)
-    function switchTab(tabId) {
-        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active-tab'));
-        document.getElementById(`${tabId}Tab`).classList.add('active-tab');
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
-    }
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const tab = btn.getAttribute('data-tab');
-            if(tab === 'wall') switchTab('wall');
-            if(tab === 'photos') switchTab('photos');
-            if(tab === 'videos') switchTab('videos');
         });
-    });
-    
-    // init renders
-    renderWall();
-    renderPhotos();
-    renderVideos();
-    updateStats();
-    
-    // helper to escape html
-    function escapeHtml(str) { 
-        if(!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if(m === '&') return '&amp;';
-            if(m === '<') return '&lt;';
-            if(m === '>') return '&gt;';
-            return m;
-        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
-            return c;
-        });
-    }
-    
-    // small fallback for router (no extra routes needed)
-    if(typeof Router !== 'undefined') {
-        const router = new Router({
-            mode: 'hash',
-            routes: {
-                '/': () => switchTab('wall'),
-                '/photos': () => switchTab('photos'),
-                '/videos': () => switchTab('videos')
-            }
-        });
-        router.init();
-    }
-    
-    // optional: set some initial demo posts if empty
-    if(yPosts.length === 0) {
-        yPosts.push([{ text: "Welcome to circlenode! 🌐 Real-time wall & P2P media using Yjs + WebTorrent.", timestamp: Date.now() }]);
-        yPosts.push([{ text: "Upload images/videos — they become torrents, streamable by peers!", timestamp: Date.now() - 3600000 }]);
-    }
-    if(yPhotos.length === 0) {
-        // add default placeholder image magnet not needed, but user will upload
-    }
-    // ensure avatar placeholder if empty
-    if(yAvatar.length === 0) {
-        yAvatar.insert(0, "https://ui-avatars.com/api/?background=3b82f6&color=fff&bold=true&size=140&name=C+Node");
-    }
+        
+        // Initial renders
+        renderWall();
+        renderPhotos();
+        renderVideos();
+        updateStats();
+        
+        // Add sample posts if empty
+        if (yPosts.length === 0) {
+            setTimeout(() => {
+                yPosts.push([{ text: "Welcome to circlenode! 🌐 Real-time wall & P2P media using Yjs + WebTorrent.", timestamp: Date.now() }]);
+                yPosts.push([{ text: "Upload images/videos — they become torrents, streamable by peers!", timestamp: Date.now() - 3600000 }]);
+            }, 500);
+        }
+        
+        // Set default avatar if empty
+        if (yAvatar.length === 0) {
+            yAvatar.insert(0, "https://ui-avatars.com/api/?background=3b82f6&color=fff&bold=true&size=140&name=C+Node");
+        }
+        
+        console.log('circlenode initialized successfully');
+    })();
 </script>
 </body>
 </html>
