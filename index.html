@@ -4,25 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>circlenode · social profile with webtorrent & yjs</title>
-    <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- WebTorrent (UMD) -->
-    <script src="https://cdn.jsdelivr.net/npm/webtorrent@2.0.0/webtorrent.min.js"></script>
     
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: linear-gradient(145deg, #f0f2f5 0%, #e6ecf4 100%);
-            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            font-family: 'Segoe UI', Roboto, sans-serif;
             padding: 24px 20px;
             color: #1e2a3e;
         }
-
         .circlenode-container {
             max-width: 1300px;
             margin: 0 auto;
@@ -30,7 +21,6 @@
             flex-wrap: wrap;
             gap: 28px;
         }
-
         .profile-card {
             flex: 1.2;
             min-width: 280px;
@@ -41,7 +31,6 @@
             padding: 1.8rem;
             border: 1px solid rgba(255,255,255,0.5);
         }
-
         .feed-panel {
             flex: 2.8;
             min-width: 320px;
@@ -54,11 +43,7 @@
             flex-direction: column;
             gap: 1.8rem;
         }
-
-        .avatar-wrapper {
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
+        .avatar-wrapper { text-align: center; margin-bottom: 1.5rem; }
         .avatar-img {
             width: 140px;
             height: 140px;
@@ -77,11 +62,9 @@
             border-radius: 60px;
             font-size: 0.8rem;
             cursor: pointer;
-            font-weight: 500;
         }
         .avatar-upload-btn:hover { background: #1e2b46; }
         .file-input-hidden { display: none; }
-
         .about-section {
             background: #f8fafc;
             border-radius: 1.5rem;
@@ -105,7 +88,6 @@
             padding-left: 12px;
             margin-bottom: 1rem;
         }
-
         .stats-row {
             display: flex;
             justify-content: space-around;
@@ -116,7 +98,6 @@
             font-weight: 600;
         }
         .stat { text-align: center; }
-
         .tabs {
             display: flex;
             gap: 12px;
@@ -136,31 +117,18 @@
         .tab-btn.active {
             background: #3b82f6;
             color: white;
-            box-shadow: 0 6px 12px -6px #3b82f680;
         }
-
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.2s ease;
-        }
+        .tab-content { display: none; }
         .tab-content.active-tab { display: block; }
-
         .feed-item {
             background: white;
             border-radius: 1.2rem;
             padding: 1rem;
             margin-bottom: 1rem;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
             border: 1px solid #e2e8f0;
         }
-        .feed-text {
-            font-size: 0.95rem;
-            margin-bottom: 0.4rem;
-        }
-        .feed-time {
-            font-size: 0.7rem;
-            color: #6c757d;
-        }
+        .feed-text { font-size: 0.95rem; margin-bottom: 0.4rem; }
+        .feed-time { font-size: 0.7rem; color: #6c757d; }
         .post-input-area {
             display: flex;
             gap: 12px;
@@ -168,7 +136,6 @@
             background: white;
             padding: 0.8rem;
             border-radius: 2rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
         .post-input {
             flex: 1;
@@ -187,8 +154,6 @@
             font-weight: bold;
             cursor: pointer;
         }
-        .post-btn:hover { background: #2563eb; }
-
         .media-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -201,16 +166,12 @@
             background: #f1f5f9;
             border-radius: 1rem;
             overflow: hidden;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             cursor: pointer;
-            transition: transform 0.1s;
         }
-        .media-card:hover { transform: scale(1.02); }
         .media-card img, .media-card video {
             width: 100%;
             height: 130px;
             object-fit: cover;
-            background: #1e293b;
         }
         .upload-media {
             margin-top: 1rem;
@@ -219,7 +180,6 @@
             padding: 12px;
             display: flex;
             gap: 12px;
-            align-items: center;
             flex-wrap: wrap;
         }
         .upload-label {
@@ -229,21 +189,11 @@
             border-radius: 60px;
             font-size: 0.8rem;
             cursor: pointer;
-            display: inline-block;
             border: none;
         }
         .upload-label:hover { background: #334155; }
         i { margin-right: 6px; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px);}
-            to { opacity: 1; transform: translateY(0);}
-        }
-        footer {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 0.75rem;
-            opacity: 0.7;
-        }
+        footer { text-align: center; margin-top: 30px; font-size: 0.75rem; opacity: 0.7; }
         button { cursor: pointer; }
         .status-badge {
             font-size: 0.7rem;
@@ -254,44 +204,39 @@
         }
         .status-badge.connected { color: #10b981; background: #d1fae5; }
         .status-badge.connecting { color: #f59e0b; background: #fed7aa; }
-        .status-badge.disconnected { color: #ef4444; background: #fee2e2; }
     </style>
 </head>
 <body>
 <div class="circlenode-container">
     <div class="profile-card">
         <div class="avatar-wrapper">
-            <img id="profileAvatar" class="avatar-img" src="https://ui-avatars.com/api/?background=3b82f6&color=fff&rounded=true&bold=true&size=140&name=C+Node" alt="avatar">
+            <img id="profileAvatar" class="avatar-img" src="https://ui-avatars.com/api/?background=3b82f6&color=fff&rounded=true&size=140&name=C+Node" alt="avatar">
             <div>
                 <button id="uploadAvatarBtn" class="avatar-upload-btn"><i class="fas fa-camera"></i> Upload avatar</button>
-                <input type="file" id="avatarFileInput" accept="image/jpeg,image/png,image/gif" class="file-input-hidden">
+                <input type="file" id="avatarFileInput" accept="image/*" class="file-input-hidden">
             </div>
             <h2 style="margin-top: 16px;">circlenode</h2>
             <p style="color:#475569"><i class="fas fa-globe"></i> decentralized · yjs + webtorrent</p>
         </div>
-
         <div class="stats-row">
-            <div class="stat"><i class="fas fa-newspaper"></i> <span id="postCount">0</span> posts</div>
-            <div class="stat"><i class="fas fa-image"></i> <span id="photoCount">0</span> photos</div>
-            <div class="stat"><i class="fas fa-video"></i> <span id="videoCount">0</span> videos</div>
+            <div class="stat"><i class="fas fa-newspaper"></i> <span id="postCount">0</span></div>
+            <div class="stat"><i class="fas fa-image"></i> <span id="photoCount">0</span></div>
+            <div class="stat"><i class="fas fa-video"></i> <span id="videoCount">0</span></div>
         </div>
-
         <div class="about-section">
             <div class="section-title"><i class="fas fa-user-astronaut"></i> About Me</div>
-            <textarea id="aboutMeInput" class="about-text" rows="3" placeholder="Write something about yourself... (real-time sync across devices)"></textarea>
+            <textarea id="aboutMeInput" class="about-text" rows="3" placeholder="Write something about yourself..."></textarea>
         </div>
         <div class="status-badge connecting" id="syncStatus">
             <i class="fas fa-sync-alt fa-spin"></i> Connecting...
         </div>
     </div>
-
     <div class="feed-panel">
         <div class="tabs">
-            <button class="tab-btn active" data-tab="wall"><i class="fas fa-th-list"></i> Wall Feeds</button>
+            <button class="tab-btn active" data-tab="wall"><i class="fas fa-th-list"></i> Wall</button>
             <button class="tab-btn" data-tab="photos"><i class="fas fa-images"></i> Photos</button>
-            <button class="tab-btn" data-tab="videos"><i class="fas fa-video"></i> Videos / Stream</button>
+            <button class="tab-btn" data-tab="videos"><i class="fas fa-video"></i> Videos</button>
         </div>
-
         <div id="wallTab" class="tab-content active-tab">
             <div class="post-input-area">
                 <input type="text" id="newPostText" class="post-input" placeholder="What's on your mind? 🌟">
@@ -299,21 +244,18 @@
             </div>
             <div id="wallFeedContainer" style="max-height: 400px; overflow-y: auto;"></div>
         </div>
-
         <div id="photosTab" class="tab-content">
             <div class="upload-media">
                 <span class="upload-label" id="uploadPhotoLabel"><i class="fas fa-upload"></i> Upload Photo</span>
-                <input type="file" id="photoFileInput" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none">
-                <small style="color:#475569"><i class="fas fa-magnet"></i> Images become torrents</small>
+                <input type="file" id="photoFileInput" accept="image/*" style="display:none">
             </div>
             <div id="photosGrid" class="media-grid"></div>
         </div>
-
         <div id="videosTab" class="tab-content">
             <div class="upload-media">
                 <span class="upload-label" id="uploadVideoLabel"><i class="fas fa-file-video"></i> Upload Video</span>
                 <input type="file" id="videoFileInput" accept="video/mp4,video/webm" style="display:none">
-                <button id="testSampleVideoBtn" class="upload-label" style="background:#6b21a5;"><i class="fas fa-magnet"></i> Load Sample</button>
+                <button id="testSampleVideoBtn" class="upload-label" style="background:#6b21a5;">🎬 Sample</button>
             </div>
             <div id="videoList" class="media-grid"></div>
             <div id="streamingPlayer" style="margin-top: 20px; display: none;">
@@ -325,26 +267,23 @@
 </div>
 <footer>⚡ circlenode — real‑time wall & media via Yjs · WebTorrent P2P streaming</footer>
 
-<script type="importmap">
-    {
-        "imports": {
-            "yjs": "https://cdn.jsdelivr.net/npm/yjs@13.6.30/+esm",
-            "y-websocket": "https://cdn.jsdelivr.net/npm/y-websocket@3.0.0/+esm"
-        }
-    }
-</script>
-
+<!-- Load everything as ES modules - NO GLOBAL SCRIPTS for Yjs -->
 <script type="module">
-    import * as Y from 'yjs';
-    import { WebsocketProvider } from 'y-websocket';
+    // Import directly - this is the ONLY place Yjs is loaded
+    import * as Y from 'https://cdn.jsdelivr.net/npm/yjs@13.6.30/+esm';
+    import { WebsocketProvider } from 'https://cdn.jsdelivr.net/npm/y-websocket@3.0.0/+esm';
     
-    console.log('✅ Yjs ES module loaded successfully');
+    // Load WebTorrent dynamically (it doesn't conflict with Yjs)
+    const webtorrentModule = await import('https://cdn.jsdelivr.net/npm/webtorrent@2.0.0/webtorrent.min.js');
+    const WebTorrent = webtorrentModule.default || window.WebTorrent;
+    
+    console.log('✅ Yjs and WebTorrent loaded as ES modules');
     
     // Initialize Yjs
     const ydoc = new Y.Doc();
     const provider = new WebsocketProvider('wss://demos.yjs.dev', 'circlenode-room', ydoc);
     
-    // Shared data types
+    // Shared data
     const yPosts = ydoc.getArray('wall_posts');
     const yPhotos = ydoc.getArray('photos');
     const yVideos = ydoc.getArray('videos');
@@ -364,19 +303,10 @@
     const torrentVideoPlayer = document.getElementById('torrentVideoPlayer');
     const syncStatus = document.getElementById('syncStatus');
     
-    // WebTorrent client
     let webtorrentClient = null;
-    if (typeof WebTorrent !== 'undefined') {
+    if (WebTorrent) {
         webtorrentClient = new WebTorrent();
         console.log('✅ WebTorrent client ready');
-    } else {
-        console.warn('WebTorrent not loaded yet');
-        setTimeout(() => {
-            if (typeof WebTorrent !== 'undefined') {
-                webtorrentClient = new WebTorrent();
-                console.log('✅ WebTorrent client ready');
-            }
-        }, 500);
     }
     
     function updateStats() {
@@ -387,57 +317,47 @@
     
     function escapeHtml(str) {
         if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        });
+        return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
     }
     
-    // Render wall feeds
     function renderWall() {
         if (!wallContainer) return;
         wallContainer.innerHTML = '';
         const posts = yPosts.toArray().slice().reverse();
         if (posts.length === 0) {
-            wallContainer.innerHTML = '<div style="text-align:center; padding: 2rem;">💬 No posts yet. Be the first to share!</div>';
+            wallContainer.innerHTML = '<div style="text-align:center;padding:2rem">💬 No posts yet</div>';
             return;
         }
         posts.forEach(post => {
             const div = document.createElement('div');
             div.className = 'feed-item';
             div.innerHTML = `
-                <div class="feed-text"><i class="fas fa-user-circle"></i> ${escapeHtml(post.text)}</div>
-                <div class="feed-time"><i class="far fa-clock"></i> ${new Date(post.timestamp).toLocaleString()}</div>
+                <div class="feed-text">👤 ${escapeHtml(post.text)}</div>
+                <div class="feed-time">📅 ${new Date(post.timestamp).toLocaleString()}</div>
             `;
             wallContainer.appendChild(div);
         });
         updateStats();
     }
     
-    // Render photos
     function renderPhotos() {
         if (!photosGrid) return;
         photosGrid.innerHTML = '';
-        const photosArr = yPhotos.toArray();
-        if (photosArr.length === 0) {
-            photosGrid.innerHTML = '<div style="text-align:center; padding: 2rem;">✨ No photos yet, upload your first image.</div>';
+        const photos = yPhotos.toArray();
+        if (photos.length === 0) {
+            photosGrid.innerHTML = '<div style="text-align:center;padding:2rem">📷 No photos yet</div>';
             return;
         }
-        photosArr.forEach((photo) => {
+        photos.forEach(photo => {
             const card = document.createElement('div');
             card.className = 'media-card';
-            const imgSrc = photo.previewDataUrl || 'https://placehold.co/200x150?text=torrent+image';
             card.innerHTML = `
-                <img src="${imgSrc}" alt="preview">
-                <div style="padding: 6px; font-size: 0.7rem; text-align:center;">${escapeHtml(photo.name || 'image')}</div>
+                <img src="${photo.preview || 'https://placehold.co/200x150'}" alt="photo">
+                <div style="padding:6px;font-size:0.7rem">${escapeHtml(photo.name)}</div>
             `;
-            if (photo.magnetURI) {
+            if (photo.magnet && webtorrentClient) {
                 card.onclick = () => {
-                    if (!webtorrentClient) { alert("WebTorrent loading..."); return; }
-                    alert("Downloading photo via P2P...");
-                    webtorrentClient.add(photo.magnetURI, (torrent) => {
+                    webtorrentClient.add(photo.magnet, (torrent) => {
                         torrent.files[0].getBlobURL((err, url) => {
                             if (!err && card.querySelector('img')) card.querySelector('img').src = url;
                         });
@@ -449,73 +369,40 @@
         updateStats();
     }
     
-    // Render videos
     function renderVideos() {
         if (!videoListDiv) return;
         videoListDiv.innerHTML = '';
-        const videosArr = yVideos.toArray();
-        if (videosArr.length === 0) {
-            videoListDiv.innerHTML = '<div style="text-align:center; padding: 2rem;">🎥 No videos yet. Upload or use sample torrent.</div>';
+        const videos = yVideos.toArray();
+        if (videos.length === 0) {
+            videoListDiv.innerHTML = '<div style="text-align:center;padding:2rem">🎥 No videos yet</div>';
             return;
         }
-        videosArr.forEach((video) => {
+        videos.forEach(video => {
             const card = document.createElement('div');
             card.className = 'media-card';
             card.style.cursor = 'pointer';
             card.innerHTML = `
-                <video poster="https://placehold.co/200x150?text=video+torrent" style="width:100%; height:130px; object-fit:cover;"></video>
-                <div style="padding:6px; font-size:0.8rem;">📀 ${escapeHtml(video.name)}</div>
+                <video poster="https://placehold.co/200x150?text=video" style="width:100%; height:130px; object-fit:cover;"></video>
+                <div style="padding:6px">📀 ${escapeHtml(video.name)}</div>
             `;
-            if (video.magnetURI) {
-                card.onclick = () => playVideoTorrent(video.magnetURI, video.name);
+            if (video.magnet && webtorrentClient) {
+                card.onclick = () => {
+                    streamingPlayerDiv.style.display = 'block';
+                    webtorrentClient.add(video.magnet, (torrent) => {
+                        const videoFile = torrent.files.find(f => /\.(mp4|webm)/i.test(f.name)) || torrent.files[0];
+                        if (videoFile) videoFile.renderTo(torrentVideoPlayer, { autoplay: true });
+                    });
+                };
             }
             videoListDiv.appendChild(card);
         });
         updateStats();
     }
     
-    let activeTorrent = null;
-    
-    function playVideoTorrent(magnetURI, videoName) {
-        if (!webtorrentClient) { 
-            alert("WebTorrent client not ready"); 
-            return; 
-        }
-        if (activeTorrent) {
-            try { webtorrentClient.remove(activeTorrent); } catch(e) {}
-        }
-        streamingPlayerDiv.style.display = 'block';
-        torrentVideoPlayer.src = '';
-        torrentVideoPlayer.poster = '';
-        torrentVideoPlayer.controls = true;
-        
-        webtorrentClient.add(magnetURI, (torrent) => {
-            activeTorrent = torrent;
-            const videoFile = torrent.files.find(f => f.name.match(/\.(mp4|webm|mkv|mov)/i)) || torrent.files[0];
-            if (videoFile) {
-                videoFile.renderTo(torrentVideoPlayer, { autoplay: true, controls: true }, (err) => {
-                    if (err) console.error(err);
-                });
-            } else {
-                torrentVideoPlayer.innerHTML = '<source src="" type="video/mp4">No playable video file.';
-            }
-        });
-    }
-    
-    // Seed file to torrent
-    function seedFileToTorrent(file, type, onMagnet) {
-        if (!webtorrentClient) {
-            alert("WebTorrent initializing...");
-            return;
-        }
+    function seedFile(file, type, callback) {
+        if (!webtorrentClient) return;
         webtorrentClient.seed(file, (torrent) => {
-            const magnetURI = torrent.magnetURI;
-            let preview = null;
-            if (type === 'photo') {
-                preview = URL.createObjectURL(file);
-            }
-            onMagnet(magnetURI, preview, file.name);
-            console.log('Seeding:', magnetURI);
+            callback(torrent.magnetURI, type === 'photo' ? URL.createObjectURL(file) : null, file.name);
         });
     }
     
@@ -524,11 +411,16 @@
     yPhotos.observe(() => { renderPhotos(); updateStats(); });
     yVideos.observe(() => { renderVideos(); updateStats(); });
     
-    // About sync
     yAbout.observe(() => {
         if (aboutTextarea && aboutTextarea.value !== yAbout.toString()) {
             aboutTextarea.value = yAbout.toString();
         }
+    });
+    
+    yAvatar.observe(() => {
+        const data = yAvatar.toString();
+        if (data && data.startsWith('data:')) avatarImg.src = data;
+        else if (data) avatarImg.src = data;
     });
     
     if (aboutTextarea) {
@@ -538,153 +430,106 @@
         });
     }
     
-    // Avatar sync
-    yAvatar.observe(() => {
-        const data = yAvatar.toString();
-        if (data && data.startsWith('data:image')) {
-            avatarImg.src = data;
-        } else if (data && data !== "") {
-            avatarImg.src = data;
-        }
-    });
-    
-    // Connection status
     provider.on('status', event => {
-        console.log('Yjs connection status:', event.status);
+        console.log('Status:', event.status);
         if (syncStatus) {
             syncStatus.className = 'status-badge ' + event.status;
             if (event.status === 'connected') {
                 syncStatus.innerHTML = '<i class="fas fa-check-circle"></i> Live sync active';
-            } else if (event.status === 'connecting') {
-                syncStatus.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Connecting...';
             } else {
-                syncStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Disconnected';
+                syncStatus.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Connecting...';
             }
         }
     });
     
-    // Initialize content if empty
-    if (yAbout.length === 0) {
-        yAbout.insert(0, "🌟 Decentralized explorer | building with yjs & webtorrent. Love P2P!");
-    }
+    // Event listeners
+    document.getElementById('publishPostBtn')?.addEventListener('click', () => {
+        const text = document.getElementById('newPostText')?.value.trim();
+        if (text) {
+            yPosts.push([{ text, timestamp: Date.now() }]);
+            document.getElementById('newPostText').value = '';
+        }
+    });
     
-    // Publish post
-    const publishBtn = document.getElementById('publishPostBtn');
-    const newPostText = document.getElementById('newPostText');
-    if (publishBtn) {
-        publishBtn.onclick = () => {
-            const text = newPostText ? newPostText.value.trim() : '';
-            if (!text) return;
-            yPosts.push([{ text: text, timestamp: Date.now() }]);
-            if (newPostText) newPostText.value = '';
-        };
-    }
+    document.getElementById('uploadAvatarBtn')?.addEventListener('click', () => {
+        document.getElementById('avatarFileInput')?.click();
+    });
     
-    // Avatar upload
-    const uploadAvatarBtn = document.getElementById('uploadAvatarBtn');
-    const avatarFileInput = document.getElementById('avatarFileInput');
-    if (uploadAvatarBtn && avatarFileInput) {
-        uploadAvatarBtn.onclick = () => avatarFileInput.click();
-        avatarFileInput.onchange = (e) => {
-            const file = e.target.files[0];
-            if (file && file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    const base64 = ev.target.result;
-                    yAvatar.delete(0, yAvatar.length);
-                    yAvatar.insert(0, base64);
-                };
-                reader.readAsDataURL(file);
-            }
-        };
-    }
+    document.getElementById('avatarFileInput')?.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                yAvatar.delete(0, yAvatar.length);
+                yAvatar.insert(0, ev.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    });
     
-    // Photo upload
-    const photoUploadLabel = document.getElementById('uploadPhotoLabel');
-    const photoFileInput = document.getElementById('photoFileInput');
-    if (photoUploadLabel && photoFileInput) {
-        photoUploadLabel.onclick = () => photoFileInput.click();
-        photoFileInput.onchange = (e) => {
-            const file = e.target.files[0];
-            if (file && file.type.startsWith('image/')) {
-                seedFileToTorrent(file, 'photo', (magnetURI, previewUrl, fileName) => {
-                    yPhotos.push([{ name: fileName, magnetURI: magnetURI, previewDataUrl: previewUrl }]);
-                    if (previewUrl) URL.revokeObjectURL(previewUrl);
-                });
-            }
-            photoFileInput.value = '';
-        };
-    }
+    document.getElementById('uploadPhotoLabel')?.addEventListener('click', () => {
+        document.getElementById('photoFileInput')?.click();
+    });
     
-    // Video upload
-    const videoUploadLabel = document.getElementById('uploadVideoLabel');
-    const videoFileInput = document.getElementById('videoFileInput');
-    if (videoUploadLabel && videoFileInput) {
-        videoUploadLabel.onclick = () => videoFileInput.click();
-        videoFileInput.onchange = (e) => {
-            const file = e.target.files[0];
-            if (file && file.type.startsWith('video/')) {
-                seedFileToTorrent(file, 'video', (magnetURI, _, fileName) => {
-                    yVideos.push([{ name: fileName, magnetURI: magnetURI, type: 'video' }]);
-                });
-            }
-            videoFileInput.value = '';
-        };
-    }
+    document.getElementById('photoFileInput')?.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            seedFile(file, 'photo', (magnet, preview, name) => {
+                yPhotos.push([{ name, magnet, preview }]);
+            });
+        }
+        e.target.value = '';
+    });
     
-    // Sample video (Big Buck Bunny sample)
-    const testSampleBtn = document.getElementById('testSampleVideoBtn');
-    if (testSampleBtn) {
-        testSampleBtn.onclick = () => {
-            const sampleMagnet = 'magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp%3A%2F%2Ftracker.opentrackr.org%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969%2Fannounce';
-            const existing = yVideos.toArray().find(v => v.name === 'Sintel Sample');
-            if (!existing) {
-                yVideos.push([{ name: 'Sintel Sample (torrent)', magnetURI: sampleMagnet, type: 'video' }]);
-            } else {
-                alert('Sample already added to video library');
-            }
-        };
-    }
+    document.getElementById('uploadVideoLabel')?.addEventListener('click', () => {
+        document.getElementById('videoFileInput')?.click();
+    });
+    
+    document.getElementById('videoFileInput')?.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            seedFile(file, 'video', (magnet, _, name) => {
+                yVideos.push([{ name, magnet }]);
+            });
+        }
+        e.target.value = '';
+    });
+    
+    document.getElementById('testSampleVideoBtn')?.addEventListener('click', () => {
+        const sampleMagnet = 'magnet:?xt=urn:btih:08ada5a7a6183aae1e09d831df6748d566095a10&dn=Sintel&tr=udp://tracker.opentrackr.org:1337';
+        if (!yVideos.toArray().find(v => v.name === 'Sintel')) {
+            yVideos.push([{ name: 'Sintel (Sample)', magnet: sampleMagnet }]);
+        }
+    });
     
     // Tab switching
     function switchTab(tabId) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active-tab'));
-        const targetTab = document.getElementById(`${tabId}Tab`);
-        if (targetTab) targetTab.classList.add('active-tab');
+        document.getElementById(`${tabId}Tab`)?.classList.add('active-tab');
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        const activeBtn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
-        if (activeBtn) activeBtn.classList.add('active');
+        document.querySelector(`.tab-btn[data-tab="${tabId}"]`)?.classList.add('active');
     }
     
     document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const tab = btn.getAttribute('data-tab');
-            if (tab === 'wall') switchTab('wall');
-            if (tab === 'photos') switchTab('photos');
-            if (tab === 'videos') switchTab('videos');
-        });
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
     });
     
-    // Initial renders
+    // Initialize
+    if (yAbout.length === 0) yAbout.insert(0, 'Building the decentralized web! 🌐');
+    if (yAvatar.length === 0) yAvatar.insert(0, 'https://ui-avatars.com/api/?background=3b82f6&color=fff&size=140&name=CN');
+    
     renderWall();
     renderPhotos();
     renderVideos();
     updateStats();
     
-    // Add sample posts if empty
     if (yPosts.length === 0) {
         setTimeout(() => {
-            yPosts.push([{ text: "Welcome to circlenode! 🌐 Real-time wall & P2P media using Yjs + WebTorrent.", timestamp: Date.now() }]);
-            yPosts.push([{ text: "Upload images/videos — they become torrents, streamable by peers!", timestamp: Date.now() - 3600000 }]);
+            yPosts.push([{ text: 'Welcome to circlenode! Real-time P2P social network', timestamp: Date.now() }]);
         }, 500);
     }
     
-    // Set default avatar if empty
-    if (yAvatar.length === 0) {
-        yAvatar.insert(0, "https://ui-avatars.com/api/?background=3b82f6&color=fff&bold=true&size=140&name=CN");
-    }
-    
-    console.log('🚀 circlenode initialized successfully with ES modules');
+    console.log('🚀 circlenode ready - single Yjs instance');
 </script>
 </body>
 </html>
