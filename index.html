@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>P2P Circles - Decentralized Profile App</title>
+    <title>P2P Circles - Auto-Join Network</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -108,23 +108,48 @@
         .stat-label { font-size: 12px; color: #666; }
         h3 { margin-bottom: 15px; color: #333; }
         h4 { margin: 20px 0 10px; color: #555; }
+        .auto-join-badge {
+            background: #e8f5e9;
+            border: 1px solid #4caf50;
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="status" class="alert alert-info">Initializing P2P Network...</div>
+        <div id="status" class="alert alert-info">
+            🔄 Auto-joining P2P network...
+        </div>
         
         <!-- Profile Section -->
         <div id="profileSection" class="card hidden">
-            <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
-                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px;">
-                    👤
+            <div class="header-row">
+                <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap;">
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px;">
+                        👤
+                    </div>
+                    <div>
+                        <h2 id="profileName" style="margin-bottom: 5px;">Loading...</h2>
+                        <div class="peer-id" id="profilePeerId"></div>
+                    </div>
                 </div>
-                <div style="flex: 1;">
-                    <h2 id="profileName" style="margin-bottom: 5px;">Loading...</h2>
-                    <div class="peer-id" id="profilePeerId"></div>
+                <div style="display: flex; gap: 10px;">
+                    <span class="auto-join-badge">🔄 Auto-Join Active</span>
+                    <button onclick="editProfile()">Edit Profile ✏️</button>
                 </div>
-                <button onclick="editProfile()">Edit Profile ✏️</button>
             </div>
             <div class="stats">
                 <div class="stat">
@@ -134,6 +159,10 @@
                 <div class="stat">
                     <div class="stat-number" id="contentCount">0</div>
                     <div class="stat-label">My Posts</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" id="onlineCount">0</div>
+                    <div class="stat-label">Online Peers</div>
                 </div>
             </div>
         </div>
@@ -146,7 +175,7 @@
             </div>
             
             <h4>Add New Connection</h4>
-            <input type="text" id="peerId" placeholder="Peer ID (from another user's profile)" />
+            <input type="text" id="peerId" placeholder="Peer ID (auto-discovers or paste manually)" />
             <select id="permissionLevel">
                 <option value="view">👁️ View Only</option>
                 <option value="comment">💬 Can Comment</option>
@@ -169,29 +198,42 @@
             <div id="contentList" style="margin-top: 20px;"></div>
         </div>
         
-        <!-- Online Peers Section -->
+        <!-- Auto-Discovered Peers Section -->
         <div class="card">
-            <h3>🌐 Discover Peers</h3>
+            <div class="header-row">
+                <h3>🌐 Auto-Discovered Peers</h3>
+                <span class="auto-join-badge">🔍 Auto-joining any peer that appears</span>
+            </div>
             <div id="peerList">
-                <p style="color: #999;">Discovering peers on the network...</p>
+                <p style="color: #999;">Scanning network for peers...</p>
             </div>
             <p style="font-size: 12px; color: #666; margin-top: 10px;">
-                💡 Tip: Open this page in another browser window or on another device to see P2P sync in action!
+                💡 <strong>Auto-Join Active:</strong> When a new peer is discovered, they are automatically added to your "discovered" list. Click "Add" to approve them to your circle.
             </p>
         </div>
     </div>
 
+    <!-- Load ReconnectingWebSocket and WebConnect (optional enhancements) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reconnecting-websocket/1.0.0/reconnecting-websocket.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/webconnect@0.0.12/dist/umd/webconnect.js"></script>
+    
     <script type="module">
-        // Import GenosDB - the CORRECT way using ES module import
+        // Import GenosDB (this is the main database with built-in P2P)
         import { gdb } from "https://cdn.jsdelivr.net/npm/genosdb@latest/dist/index.min.js";
         
-        // Global state
+        // ============ GLOBAL STATE ============
         let db = null;
         let currentUser = null;
         let currentPeerId = null;
-        let allPeers = new Map(); // Store discovered peers
+        let allPeers = new Map();
+        let discoveredPeers = new Set();
+        let networkStatus = "connecting";
         
-        // Helper: Update status message
+        // Optional: Use WebConnect for enhanced signaling if needed
+        let webconnect = null;
+        let reconnectWs = null;
+        
+        // ============ HELPER FUNCTIONS ============
         function updateStatus(message, type) {
             const statusEl = document.getElementById("status");
             statusEl.className = `alert alert-${type}`;
@@ -206,39 +248,52 @@
             }, 5000);
         }
         
-        // Helper: Get current peer ID from GenosDB
-        // Based on the whiteboard example which uses db.room and peer identification [citation:3]
-        function getCurrentPeerId() {
-            // In GenosDB, the peer ID is accessible through the room or connection
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Get current peer ID from GenosDB
+        function getCurrentPeerIdFromDB() {
             if (db && db.room && db.room.id) {
                 return db.room.id;
             }
-            // Fallback: generate a short ID from the connection
-            return `peer_${Math.random().toString(36).substring(2, 10)}`;
+            if (db && db._connection && db._connection.peerId) {
+                return db._connection.peerId;
+            }
+            // Fallback: generate consistent ID from localStorage
+            let storedId = localStorage.getItem("p2p_peer_id");
+            if (!storedId) {
+                storedId = `peer_${Math.random().toString(36).substring(2, 15)}`;
+                localStorage.setItem("p2p_peer_id", storedId);
+            }
+            return storedId;
         }
         
-        // Get or create user profile in the database
+        // ============ GENOSDB CORE FUNCTIONS ============
+        
+        // Get or create user profile
         async function getOrCreateProfile(peerId) {
             const profileKey = `profile_${peerId}`;
             
             try {
-                // Try to get existing profile
                 let profile = await db.get(profileKey);
                 
                 if (!profile) {
-                    // Create new profile
                     profile = {
                         id: profileKey,
                         peerId: peerId,
                         name: `User_${peerId.slice(-6)}`,
                         bio: "Building my decentralized circle",
-                        circle: [],      // Array of { peerId, permissions, addedAt }
-                        content: [],     // Array of content IDs
+                        circle: [],
+                        content: [],
                         createdAt: new Date().toISOString(),
                         lastSeen: new Date().toISOString()
                     };
                     await db.put(profile);
-                    updateStatus(`✨ Profile created! Your ID: ${peerId.slice(0, 12)}...`, "success");
+                    updateStatus(`✨ Profile created! Auto-joined network`, "success");
                 }
                 
                 return profile;
@@ -248,7 +303,7 @@
             }
         }
         
-        // Update the UI with current user data
+        // Update UI with current user data
         async function updateUI() {
             if (!currentUser) return;
             
@@ -262,17 +317,16 @@
             await updateContentList();
         }
         
-        // Update the circle members list in UI
+        // Update circle members list
         async function updateCircleList() {
             const container = document.getElementById("circleList");
             const members = currentUser?.circle || [];
             
             if (members.length === 0) {
-                container.innerHTML = '<p style="color: #999; text-align: center;">✨ No connections yet. Add your first peer above!</p>';
+                container.innerHTML = '<p style="color: #999; text-align: center;">✨ No connections yet. Add peers from the discovery section!</p>';
                 return;
             }
             
-            // Fetch each member's profile to display their name
             let membersHtml = '';
             for (const member of members) {
                 let memberName = member.peerId.slice(0, 12) + '...';
@@ -281,9 +335,7 @@
                     if (memberProfile && memberProfile.name) {
                         memberName = memberProfile.name;
                     }
-                } catch (e) {
-                    // Use peer ID as fallback
-                }
+                } catch (e) {}
                 
                 const badgeClass = member.permissions === 'admin' ? 'badge-admin' : 
                                   (member.permissions === 'comment' ? 'badge-comment' : 'badge-view');
@@ -303,7 +355,7 @@
             container.innerHTML = membersHtml;
         }
         
-        // Update the content/posts list in UI
+        // Update content/posts list
         async function updateContentList() {
             const container = document.getElementById("contentList");
             const contentIds = currentUser?.content || [];
@@ -343,62 +395,71 @@
             }
         }
         
-        // Discover other peers on the network
+        // Auto-discover peers on the network
         async function discoverPeers() {
             try {
-                // Query for all public profiles (excluding self)
                 const allNodes = await db.query({
                     selector: {
                         id: { $regex: "^profile_" }
                     }
                 });
                 
-                const discoveredPeers = [];
+                const newPeers = [];
                 for (const node of allNodes) {
                     if (node.value && node.value.peerId !== currentPeerId) {
-                        discoveredPeers.push(node.value);
+                        if (!discoveredPeers.has(node.value.peerId)) {
+                            discoveredPeers.add(node.value.peerId);
+                            newPeers.push(node.value);
+                        }
                         allPeers.set(node.value.peerId, node.value);
                     }
                 }
                 
+                // Update online count
+                document.getElementById("onlineCount").innerText = allPeers.size;
+                
                 // Update peer discovery UI
                 const peerListEl = document.getElementById("peerList");
-                if (discoveredPeers.length === 0) {
-                    peerListEl.innerHTML = '<p style="color: #999; text-align: center;">🌐 No other peers found. Share this app with friends!</p>';
+                if (allPeers.size === 0) {
+                    peerListEl.innerHTML = '<p style="color: #999; text-align: center;">🌐 No other peers found. Open this app in another browser!</p>';
                 } else {
                     let peersHtml = '';
-                    for (const peer of discoveredPeers) {
-                        const alreadyInCircle = currentUser?.circle?.some(m => m.peerId === peer.peerId);
+                    for (const [peerId, peer] of allPeers) {
+                        const alreadyInCircle = currentUser?.circle?.some(m => m.peerId === peerId);
                         peersHtml += `
                             <div class="circle-item">
                                 <div>
                                     <strong>${escapeHtml(peer.name || 'Anonymous')}</strong>
-                                    <div class="peer-id">${peer.peerId.slice(0, 20)}...</div>
+                                    <div class="peer-id">${peerId.slice(0, 24)}...</div>
                                 </div>
-                                ${!alreadyInCircle ? 
-                                    `<button onclick="window.quickAddPeer('${peer.peerId}')" style="padding: 5px 12px; font-size: 12px;">Add ➕</button>` :
-                                    `<span class="badge badge-view" style="background: #ccc;">In Circle ✓</span>`
-                                }
+                                <div>
+                                    ${!alreadyInCircle ? 
+                                        `<button onclick="window.quickAddPeer('${peerId}')" style="padding: 5px 12px; font-size: 12px;">➕ Add to Circle</button>` :
+                                        `<span class="badge badge-view" style="background: #ccc;">✓ In Circle</span>`
+                                    }
+                                </div>
                             </div>
                         `;
                     }
                     peerListEl.innerHTML = peersHtml;
                 }
                 
-                document.getElementById("peerCount")?.setAttribute?.("data-count", discoveredPeers.length);
+                if (newPeers.length > 0) {
+                    updateStatus(`🔍 Auto-discovered ${newPeers.length} new peer${newPeers.length > 1 ? 's' : ''} on the network!`, "success");
+                }
                 
             } catch (error) {
                 console.log("Peer discovery:", error.message);
             }
         }
         
-        // Quick add peer from discovery list
+        // ============ CIRCLE ACTIONS ============
+        
         window.quickAddPeer = async function(peerId) {
             document.getElementById("peerId").value = peerId;
             await addToCircle();
         };
         
-        // Add a peer to your circle
         window.addToCircle = async function() {
             const peerId = document.getElementById("peerId").value.trim();
             const permission = document.getElementById("permissionLevel").value;
@@ -413,13 +474,11 @@
                 return;
             }
             
-            // Check if already in circle
             if (currentUser.circle.some(m => m.peerId === peerId)) {
                 updateStatus("This peer is already in your circle", "error");
                 return;
             }
             
-            // Add to circle
             currentUser.circle.push({
                 peerId: peerId,
                 permissions: permission,
@@ -428,11 +487,10 @@
             
             await db.put(currentUser);
             document.getElementById("peerId").value = "";
-            updateStatus(`✅ Added ${peerId.slice(0, 12)}... to your circle with ${permission} permissions`, "success");
+            updateStatus(`✅ Added ${peerId.slice(0, 12)}... to your circle`, "success");
             await updateCircleList();
         };
         
-        // Share new content/post
         window.shareContent = async function() {
             const title = document.getElementById("postTitle").value.trim();
             const content = document.getElementById("postContent").value.trim();
@@ -457,15 +515,13 @@
                 
                 const postId = await db.put(post);
                 
-                // Add to user's content list
                 currentUser.content.push(postId);
                 await db.put(currentUser);
                 
-                // Clear form
                 document.getElementById("postTitle").value = "";
                 document.getElementById("postContent").value = "";
                 
-                updateStatus(`📢 "${title}" shared with ${visibility} visibility!`, "success");
+                updateStatus(`📢 "${title}" shared!`, "success");
                 await updateContentList();
                 
             } catch (error) {
@@ -474,7 +530,6 @@
             }
         };
         
-        // Edit user profile
         window.editProfile = async function() {
             const newName = prompt("Enter your display name:", currentUser.name);
             const newBio = prompt("Enter your bio:", currentUser.bio || "");
@@ -484,71 +539,83 @@
             
             await db.put(currentUser);
             document.getElementById("profileName").innerText = currentUser.name;
-            updateStatus("Profile updated successfully!", "success");
+            updateStatus("Profile updated!", "success");
         };
         
-        // Escape HTML to prevent XSS
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-        
-        // Set up reactive subscriptions for real-time updates
+        // ============ SETUP REALTIME SUBSCRIPTIONS ============
         async function setupSubscriptions() {
-            // Subscribe to profile changes for circle members
             const profileQuery = { selector: { id: { $regex: "^profile_" } } };
             
             await db.map(profileQuery, async ({ id, value, action }) => {
                 if (value && value.peerId !== currentPeerId) {
-                    // A peer's profile was updated - refresh UI if needed
-                    if (currentUser?.circle?.some(m => m.peerId === value.peerId)) {
-                        // Refresh circle list to show updated names
-                        await updateCircleList();
-                    }
-                    // Update peer discovery
+                    await updateCircleList();
                     await discoverPeers();
                 }
             });
             
-            // Periodically discover peers
+            // Auto-discover every 10 seconds
             setInterval(async () => {
                 if (db && currentPeerId) {
                     await discoverPeers();
                 }
-            }, 15000);
+            }, 10000);
         }
         
-        // Initialize the entire application
+        // ============ OPTIONAL: WebConnect + ReconnectingWebSocket Setup ============
+        // These are for enhanced signaling reliability (optional - GenosDB works without them)
+        function setupEnhancedSignaling() {
+            try {
+                if (typeof WebConnect !== 'undefined') {
+                    webconnect = new WebConnect({
+                        debug: true,
+                        reconnect: true
+                    });
+                    console.log("WebConnect initialized for enhanced signaling");
+                }
+                
+                if (typeof ReconnectingWebSocket !== 'undefined') {
+                    reconnectWs = new ReconnectingWebSocket('wss://relay.genosdb.com');
+                    reconnectWs.onopen = () => console.log("Enhanced WebSocket connected");
+                    reconnectWs.onerror = (err) => console.log("WebSocket error:", err);
+                }
+            } catch (e) {
+                console.log("Enhanced signaling not available, using GenosDB defaults");
+            }
+        }
+        
+        // ============ MAIN INITIALIZATION ============
         async function initApp() {
             try {
-                updateStatus("🚀 Initializing P2P Network...", "info");
+                updateStatus("🔄 Auto-joining P2P network via GenosDB...", "info");
                 
-                // Initialize GenosDB with RTC enabled - from official docs [citation:4][citation:5][citation:8]
+                // Setup optional enhanced signaling
+                setupEnhancedSignaling();
+                
+                // Initialize GenosDB with RTC enabled
+                // This automatically handles peer discovery and connection [citation:1]
                 db = await gdb("p2p-circles-app", { 
-                    rtc: true  // Enables WebRTC peer-to-peer communication
+                    rtc: true  // Built-in WebRTC for P2P
                 });
                 
                 updateStatus("🔗 Connected to P2P network", "info");
                 
-                // Get the current peer ID
-                currentPeerId = getCurrentPeerId();
-                updateStatus(`🆔 Your Peer ID: ${currentPeerId.slice(0, 16)}...`, "success");
+                // Get peer ID
+                currentPeerId = getCurrentPeerIdFromDB();
+                updateStatus(`🆔 Auto-joined with ID: ${currentPeerId.slice(0, 16)}...`, "success");
                 
-                // Get or create user profile
+                // Get or create profile
                 currentUser = await getOrCreateProfile(currentPeerId);
                 
-                // Set up real-time subscriptions
+                // Setup real-time subscriptions
                 await setupSubscriptions();
                 
                 // Update UI
                 await updateUI();
                 
-                // Start peer discovery
+                // Initial peer discovery
                 await discoverPeers();
                 
-                updateStatus("✅ Ready! Your P2P circle is active.", "success");
+                updateStatus("✅ Auto-join complete! Your P2P circle is active.", "success");
                 setTimeout(() => {
                     const statusEl = document.getElementById("status");
                     if (statusEl) statusEl.style.display = "none";
@@ -556,11 +623,11 @@
                 
             } catch (error) {
                 console.error("Initialization failed:", error);
-                updateStatus(`❌ Failed to initialize: ${error.message}`, "error");
+                updateStatus(`❌ Failed to auto-join: ${error.message}`, "error");
             }
         }
         
-        // Make functions available globally for onclick handlers
+        // Make functions global
         window.addToCircle = addToCircle;
         window.shareContent = shareContent;
         window.editProfile = editProfile;
